@@ -1,0 +1,183 @@
+Replit Project Prompt — KURAI Launchpad (safe, anti-sniper)
+
+Project name: kurai-launchpad
+Goal: UI + basic app flow for a Pumpfun/Solana-compatible launchpad that prevents front-running using fair-launch patterns (commit–reveal, batch auctions, LBP), with dev funds routed through escrow + timelock/multisig. The frontend uses Kurai’s dark/teal color theme.
+
+Safety: DO NOT implement or request any code that hides or makes wallets untraceable. Dev payouts must use auditable on-chain flows (escrow, vesting, multisig/time-lock). This prompt purposefully avoids privacy-evasion details.
+
+Tech stack (recommended)
+
+Frontend: React (Vite) + Tailwind CSS (or plain CSS with CSS variables)
+
+Wallet: @solana/wallet-adapter-react + Phantom adapter (mockable in Replit)
+
+Backend (dev-replit server): Node.js + Express (for sealed-order relay, rate-limiting, and ephemeral storage)
+
+Optional: Supabase / Postgres for order queue persistence and audit logs
+
+On-chain contracts: placeholders for audited CommitmentRegistry, BatchAuction, EscrowVesting, LBPController (implemented off-Replit by solidity/anchor devs)
+
+Kurai color tokens (CSS variables)
+
+Use these in your Tailwind config or CSS:
+
+:root{
+  --kurai-deep: #1E1436;      /* deep purple */
+  --kurai-mid:  #2E1B4A;      /* mid purple */
+  --kurai-accent:#26E7D7;     /* neon teal */
+  --kurai-accent-2:#3BE8D3;   /* cyanish */
+  --kurai-pale: #BFEFF3;      /* pale glow */
+  --kurai-bg:   #0F0B14;      /* near-black */
+  --text-main:  #E6F9F8;
+}
+
+Project file structure (starter)
+/kurai-launchpad
+  /public
+    index.html
+    kurai-logo.svg (placeholder)
+  /src
+    main.jsx
+    App.jsx
+    /components
+      Header.jsx
+      WalletConnect.jsx
+      CreateLaunchForm.jsx
+      CommitRevealFlow.jsx
+      BatchAuction.jsx
+      EscrowDashboard.jsx
+      AuditLog.jsx
+    /styles
+      globals.css
+  server.js        <-- small Express server for sealed-order relay + rate limits
+  package.json
+  README.md        <-- paste this prompt as README
+
+Starter package.json (example)
+{
+  "name":"kurai-launchpad",
+  "private":true,
+  "scripts":{
+    "dev":"vite",
+    "build":"vite build",
+    "preview":"vite preview",
+    "start-server":"node server.js"
+  },
+  "dependencies":{
+    "react":"18.x",
+    "react-dom":"18.x",
+    "vite":"latest",
+    "express":"latest",
+    "@solana/wallet-adapter-react":"latest",
+    "@solana/wallet-adapter-react-ui":"latest",
+    "@solana/wallet-adapter-phantom":"latest",
+    "axios":"latest"
+  }
+}
+
+What the Replit app will DO (MVP)
+
+Theme and layout matching Kurai colors + anime aesthetic hero (place character art in header).
+
+Wallet connect UI (Phantom adapter) — clearly labelled and mockable in Replit.
+
+Create launch form with safe options:
+
+Launch mode: Batch auction / LBP / Dutch / Bonding curve (UI only; hook for on-chain later)
+
+Developer allocation & vesting schedule (defaults to on-chain vesting with timelock)
+
+Option: require multisig or community sign-off to release dev funds
+
+Commit–reveal flow UI: show how creators submit a commitment (hash) and later reveal — the frontend generates the commitment and stores it locally or submits to a sealed relay (server) — placeholder for on-chain submission.
+
+Sealed order batch UI: traders submit sealed orders to an off-chain relay (server) during a window; server publishes a merkle root or encrypted bundle to on-chain at settlement time. This removes mempool visibility of individual orders. (High-level flow only — actual on-chain settlement requires an audited contract.)
+
+Escrow & vesting dashboard: show funds flow into escrow, vesting schedule visualization, and release milestones; all movements are auditable in the UI with tx links (once integrated).
+
+Audit log: Simple UI table that records events (commitments, reveals, batch settlements, escrow releases) and links to transaction hashes (or placeholders).
+
+Basic anti-bot measures: client + server rate limits, captcha placeholder, and nonce-based signer check UI.
+
+Starter UI copy & components (what to implement now)
+
+Header
+
+Logo (KURAI mark), tagline: “KURAI — fair launches, ghostly UX.”
+
+Connect Wallet button (shows connected pubkey).
+
+Create Launch (CreateLaunchForm.jsx)
+
+Fields: name, symbol, total supply, launch type (select), commit-reveal toggle, dev allocation + vesting (days/weeks), escrow multisig address.
+
+Preview Parameters button: shows a hashed commitment preview (SHA256 of parameters).
+
+Commit–Reveal Panel (CommitRevealFlow.jsx)
+
+Commit button: generates commitment (hash) and optionally POSTs to /api/commitments (sealed relay).
+
+Reveal button: allows reveal after reveal window—sends reveal to on-chain contract (placeholder function).
+
+Batch Auction (BatchAuction.jsx)
+
+Submit Sealed Order form: amount, maxPrice, signature. Submits to /api/orders (server saves sealed order). Shows order status as sealed.
+
+Settle Batch (creator action): triggers a settleBatch() placeholder that calls on-chain contract to process sealed orders and add liquidity.
+
+Escrow Dashboard (EscrowDashboard.jsx)
+
+Shows escrow balance, vesting timeline, multisig signers, and proposeRelease() placeholder.
+
+AuditLog (AuditLog.jsx)
+
+Chronological events, searchable, with tx links.
+
+Minimal server (server.js) responsibilities
+
+/api/commitments — store commitment entries (timestamped). (In Replit, store in-memory or file for demo.)
+
+/api/orders — accept sealed order bundles and store them securely until settlement window ends.
+
+Rate limiting middleware; simple IP + address throttle.
+
+Endpoint to export audit log (CSV) for transparency.
+
+Important: Server stores sealed orders only to enable fair-batch settlement. The server must be run by a trusted relayer and ideally backed by a verifiable log (merkle root) and an external auditor. Do not use server as a way to hide funds or ownership.
+
+UI theme & example Tailwind snippet
+
+If using Tailwind, add these CSS variables in globals.css and map them to Tailwind theme colors:
+
+body { background: linear-gradient(180deg, var(--kurai-bg), #06040a); color: var(--text-main); font-family: Inter, system-ui; }
+.header { background: linear-gradient(90deg, rgba(30,20,54,0.8), rgba(46,27,74,0.8)); border-bottom: 1px solid rgba(38,231,215,0.08); }
+.button-primary { background: linear-gradient(90deg, var(--kurai-accent), var(--kurai-accent-2)); color: var(--kurai-deep); padding: .6rem 1.2rem; border-radius: 12px; font-weight:600;}
+.card { background: rgba(20,14,30,0.6); border: 1px solid rgba(38,231,215,0.06); box-shadow: 0 6px 20px rgba(0,0,0,0.6); border-radius: 16px; padding: 1rem; }
+
+Example placeholder functions (frontend)
+
+Add safe placeholder functions so the UI compiles and shows flows (no blockchain secrets):
+
+// utils/launchUtils.js
+import crypto from 'crypto';
+export function makeCommitment(params){ // params: JSON
+  const payload = JSON.stringify(params);
+  return crypto.createHash('sha256').update(payload).digest('hex');
+}
+export async function submitCommitmentToRelay(commitHash){ 
+  return fetch('/api/commitments', {method:'POST', body: JSON.stringify({commitHash}), headers:{'Content-Type':'application/json'}});
+}
+
+README / dev instructions for Replit
+
+Create a new Replit project (Node + Vite/React).
+
+Paste file structure above. Add package.json dev deps and run npm install.
+
+Add sample Kurai artwork (public/kurai-hero.png) and attribution.
+
+Run npm run dev (Vite) and npm run start-server in parallel (or use Replit's multi-process config).
+
+Open the UI, test commit and sealed-order flows (they are mocked against the local Express server).
+
+Next on-chain step (after audit): implement Anchor / Solana programs for CommitmentRegistry, BatchSettlement, and EscrowVesting. Hire an auditor before mainnet deploy.
